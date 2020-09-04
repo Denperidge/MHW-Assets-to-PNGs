@@ -13,14 +13,21 @@ for %%t in (%*) do (
 
 for %%d in (%*) do (
     REM Output dir + "BC7_" + filename + ".dds"
-    set oldfilename="%%~dpdBC7_%%~nd.dds"
+
+    for %%f in ("%%~dpd*%%~nd.dds") do (
+        set oldfilename="%%f"
+    )
+
+
+    rem set oldfilename="%%~dpdBC7_%%~nd.dds"
     set newfilename="%%~dpdBC7_%%~nd.png"
-    
+    set icondir=%%~dpdBC7_%%~nd\
+
     echo "Converting tex to dds"
     %NVIDIA_TEXTURE_TOOLS_EXPORTER% !oldfilename! --format bc7 --output !newfilename!
     magick convert !newfilename! -trim !newfilename! 
 
-    set icon="y"
+    set icon="n"
 
     if !icon!=="y" (
         REM Saving output to variable: https://stackoverflow.com/a/2340018/5522348
@@ -28,6 +35,8 @@ for %%d in (%*) do (
         magick identify -format "%%[w]" !newfilename! > width.tmp
         magick identify -format "%%[h]" !newfilename! > height.tmp
 
+
+        mkdir "!icondir!"
 
         set /p width=<width.tmp
         set /p height=<height.tmp
@@ -43,18 +52,16 @@ for %%d in (%*) do (
         set /a iconwidth=!width! / !hor! + 1
         set /a iconheight=!height! / !ver! + 1
 
+        echo !iconwidth!
         echo !iconheight!
-
 
         for /L %%v in (0,!iconheight!,!height!) do (
             echo "V: %%v"
             for /L %%h in (0,!iconwidth!,!width!) do (
-                echo "!iconwidth!x!iconheight!+%%h+%%v"
-                magick convert -extract "!iconwidth!x!iconheight!+%%h+%%v" !newfilename! "!newfilename!%%h%%v.png"
+                echo "H: %%h"
+                magick convert -extract "!iconwidth!x!iconheight!+%%h+%%v" !newfilename! +profile "*" "!icondir!%%h-%%v.png"
             )
         )
     )
 )
     
-    
-REM magick convert -extract 1024x1024+0+0 BC7_cmn_creature00_ID.png test.png
